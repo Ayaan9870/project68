@@ -6,6 +6,7 @@ import math
 xCords = []
 yCords = []
 
+# Create tracker variable using cv2.legacy.TrackerCSRT_create()
 tracker = cv2.legacy.TrackerCSRT_create()
 
 confidenceThreshold = 0.1
@@ -20,7 +21,7 @@ labels = open(labelsPath).read().strip().split('\n')
 
 yoloNetwork = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
 
-video = cv2.VideoCapture("car.mp4")
+video = cv2.VideoCapture("car10.mp4")
 
 detected = False
 
@@ -55,10 +56,8 @@ def carTrack(img, bbox):
 
 
 while True:
-    readVideo = video.read()
-    check = readVideo[0]
+    check, image = video.read()
     if check:
-        image = readVideo[1]
         image = cv2.resize(image, (0, 0), fx=1, fy=1)
         dimensions = image.shape[:2]
         H = dimensions[0]
@@ -97,21 +96,24 @@ while True:
             if (len(detectionNMS) > 0):
                 for i in detectionNMS.flatten():
                     if labels[classIds[i]] == "car":
-                        x = boxes[i][0]
-                        y = boxes[i][1]
-                        w = boxes[i][2]
-                        h = boxes[i][3]
+                        x, y, w, h = boxes[i]
                         color = (255, 0, 0)
                         cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
+                        # Initialize the tracker
                         tracker.init(image, boxes[i])
+                        # Set detected variable to true
                         detected = True
         else:
+            # Get the trackerInfor from tracker.update(image)
             trackerInfo = tracker.update(image)
+            # Store trackerInfor[0] in success and trackInfo[1] in bbox variable
             success = trackerInfo[0]
             bbox = trackerInfo[1]
 
+            # If success is true the call the drawBox function with the image and bbox variables
             if success:
                 drawBox(image, bbox)
+            # else add text "Lost" on the screen and set the detected variable to false
             else:
                 cv2.putText(image, "Lost", (75, 90),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
